@@ -382,10 +382,12 @@ module.exports = {
     try {
       // 多个文件处理
       req.files.forEach(function (element) {
-        if (checkExtension(nodePath.extname(element.originalname))) {
+        // 解决中文文件名乱码问题
+        let name = Buffer.from(element.originalname,"latin1").toString("utf8");
+        if (checkExtension(nodePath.extname(name))) {
           fs.readFile(element.path, function (err, data) {
             fs.writeFile(
-              `${coreFolder}${path}/${element.originalname}`,
+              `${coreFolder}${path}/${name}`,
               data,
               function (err) {
                 if (err) {

@@ -1,6 +1,6 @@
 /**
  * @author MilesChen
- * @description  文件管理器全局路由
+ * @description  文件管理器全局路由分发
  * @createDate 2023-01-13 10:25:33
  */
 
