@@ -1,7 +1,12 @@
+/**
+ * @author MilesChen
+ * @description  文件树读取
+ * @createDate 2023-01-19 18:46:56
+ */
 
 'use strict';
 
-// 它是 fs 模块的 pro版本。更可靠，更强。支持文件流
+// 它是 fs 模块的 pro版本 更可靠，更强且支持文件流
 const FS = require('graceful-fs');
 const PATH = require('path');
 const constants = {
@@ -115,14 +120,10 @@ function directoryTree (path, options, onEachFile, onEachDirectory, depth) {
 				item[attribute] = stats[attribute];
 			});
 		}
-		console.log(dirData);
 		if(!options.withChildren){
-			console.log('不读取子目录');
-			console.log(!depth);
 			if(!depth){
 				item.children = dirData.map(child => directoryTree(PATH.join(path, child), options, onEachFile, onEachDirectory, true)).filter(e => !!e);
 				item.size = item.children.reduce((prev, cur) => prev + cur.size, 0);
-				console.log(item.size );
 				if (onEachDirectory) {
 					onEachDirectory(item, PATH, stats);
 				}
