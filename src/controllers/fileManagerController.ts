@@ -4,9 +4,7 @@
  * @createDate 2023-01-10 14:44:43
  */
 
-// 用于处理和解压 ZIP 文件。它提供了一个简单的流（stream）接口，可以用于读取、解压缩及处理 ZIP 文件中的内容。可在内存操作而不写入磁盘
 import unzipper from 'unzipper'
-// archiver是一个流式压缩和解压缩库
 import archiver from 'archiver'
 import nodePath from 'path'
 const coreFolder = nodePath.resolve(__dirname + '/../../')
@@ -19,7 +17,6 @@ import {
 } from '../utils/filemanager'
 import fs from 'graceful-fs'
 import AppError from '../utils/appError'
-// 相对于 fs 模块 操作根据简单灵活 扩展 支持 复制、删除、移动文件等
 import fsExtra from 'fs-extra'
 
 const fileManagerController = {

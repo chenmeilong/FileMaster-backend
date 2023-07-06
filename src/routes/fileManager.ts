@@ -10,11 +10,9 @@ import express, { Router } from 'express'
 import fileManagerController from '../controllers/fileManagerController'
 
 const router: Router = express.Router()
-
 const coreFolder = nodePath.resolve(__dirname + '/../../')
 const TMP_PATH = `${coreFolder}/uploads/tmp`
 
-// multer中间件处理多文件上传，先保存到指定目录中，再后续处理。
 // 对文件大小限制，防止出现服务器崩溃
 const upload = multer({
   dest: `${TMP_PATH}/`,
@@ -38,7 +36,6 @@ router.post('/unzip', fileManagerController.unzip)
 router.post('/archive', fileManagerController.archive)
 router.post('/duplicate', fileManagerController.duplicate)
 router.post('/saveimage', fileManagerController.saveImage)
-// 中间件处理文件上传
 router.post('/upload', upload.any(), fileManagerController.uploadFiles)
 
 export default router

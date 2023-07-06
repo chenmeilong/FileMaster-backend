@@ -5,7 +5,6 @@
  */
 
 import AppError from '../utils/appError'
-// 读取环境变量是否有NODE_ENV
 const environment = process.env.NODE_ENV || 'development'
 
 const handleCastErrorDB = (err: any) => {

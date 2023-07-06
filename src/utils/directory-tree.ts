@@ -4,8 +4,6 @@
  * @createDate 2023-01-19 18:46:56
  */
 
-// 它是 fs 模块的 pro版本 更可靠，更强且支持文件流
-// import FS = require('graceful-fs');
 import FS from 'graceful-fs'
 import PATH from 'path'
 const constants = {
@@ -14,7 +12,6 @@ const constants = {
 }
 
 // 安全读取目录，出现无权读取的目录使用异常处理,提高系统的健壮性
-// dirData string[]
 function safeReadDirSync(path: FS.PathLike) {
   let dirData: string[] = []
   try {
@@ -29,23 +26,16 @@ function safeReadDirSync(path: FS.PathLike) {
   return dirData
 }
 
-/**
- * 将Windows风格的路径标准化，将双反斜杠替换为单斜杠（Unix风格）
- * @param  {string} path
- * @return {string}
- */
+// 将Windows风格的路径标准化，将双反斜杠替换为单斜杠（Unix风格）
 function normalizePath(path: string) {
   return path.replace(/\\/g, '/')
 }
 
-/**
- * 判断是否支持正则
- * @param  {any}  regExp
- * @return {Boolean}
- */
+// 判断是否支持正则
 // function isRegExp(regExp: Object) {
 // 	return typeof regExp === "object" && regExp.constructor == RegExp;
 // }
+
 // 文件权限计算
 function permissionsConvert(mode: number) {
   return {
@@ -98,11 +88,15 @@ interface OnEachCallback {
   (item: Item, path: typeof PATH, stats: FS.Stats): void
 }
 
-//自定义文件函数回调
-//自定义文件夹回调
-// depth 是否往深度读取 false默认为是，false表否
-
-// 递归 构建文件树
+/**
+ * 递归构建文件tree
+ * @param path 请求根地址
+ * @param options 递归参数配置
+ * @param onEachFile 自定义文件回调
+ * @param onEachDirectory 自定义文件夹回调
+ * @param depth 是否往深度读取 false默认为是，false表否
+ * @return Item | null
+ */
 const directoryTree = (
   path: string,
   options: Options,
@@ -124,7 +118,7 @@ const directoryTree = (
     return null
   }
 
-  // 根据options.exclude string[] | RegExp 判断是否需要排除当前文件
+  // 根据options.exclude判断是否需要排除当前文件
   if (options && options.exclude) {
     const excludes = Array.isArray(options.exclude)
       ? options.exclude
