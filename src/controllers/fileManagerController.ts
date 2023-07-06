@@ -5,25 +5,22 @@
  */
 
 // 用于处理和解压 ZIP 文件。它提供了一个简单的流（stream）接口，可以用于读取、解压缩及处理 ZIP 文件中的内容。可在内存操作而不写入磁盘
-const unzipper = require("unzipper");
-//archiver是一个流式压缩和解压缩库
-const archiver = require("archiver");
-const nodePath = require("path");
-const coreFolder = nodePath.resolve(__dirname + "/../");
-const dirTree = require("../utils/directory-tree");
-const {
-  escapePath,
-  checkExtension,
-  checkVariables,
-} = require("../utils/filemanager");
-const fs = require("graceful-fs");
-const AppError = require("../utils/appError");
-// 相对于 fs 模块 操作根据简单灵活  扩展 支持 复制、删除、移动文件等
-const fsExtra = require("fs-extra");
+import  unzipper from "unzipper";
+// archiver是一个流式压缩和解压缩库
+import  archiver from "archiver";
+import  nodePath from "path";
+const coreFolder = nodePath.resolve(__dirname + "/../../");
+import  dirTree from "../utils/directory-tree";
+import { Request, Response, NextFunction } from 'express';
+import { escapePath, checkExtension, checkVariables } from "../utils/filemanager";
+import  fs from "graceful-fs";
+import  AppError from "../utils/appError";
+// 相对于 fs 模块 操作根据简单灵活 扩展 支持 复制、删除、移动文件等
+import  fsExtra from "fs-extra";
 
-module.exports = {
+const fileManagerController = {
   // 获取文件夹树
-  async folderTree(req, res, next) {
+  async folderTree(req: Request, res: Response) {
     const { path } = req.body;
     const paths = dirTree(coreFolder + escapePath(path), {
       normalizePath: true,
@@ -33,7 +30,7 @@ module.exports = {
     res.status(200).send(paths);
   },
   // 指定路径下的文件和文件夹list
-  async folderInfo(req, res, next) {
+  async folderInfo(req: Request, res: Response) {
     const { path } = req.body;
     const paths = dirTree(coreFolder + escapePath(path), {
       normalizePath: true,
@@ -43,7 +40,7 @@ module.exports = {
     res.status(200).send(paths);
   },
   // 指定路径下的文件夹和文件和文件树 指定路径下 所有的文件内容 可读取总文件夹的大小，其他则不行
-  async all(req, res, next) {
+  async all(req: Request, res: Response) {
     const { path } = req.body;
     const paths = dirTree(coreFolder + escapePath(path), {
       normalizePath: true,
@@ -54,7 +51,7 @@ module.exports = {
     res.status(200).send(paths);
   },
   // 文件或文件夹重命名
-  async rename(req, res, next) {
+  async rename(req: Request, res: Response, next: NextFunction) {
     let { path, newname } = req.body;
     path = escapePath(path);
     // 根据newname扩展名判断是否为允许修改
@@ -74,7 +71,7 @@ module.exports = {
       `${coreFolder}/${renamePath}`,
       function (err) {
         if (err) {
-          return next(new AppError(err, 400));
+          return next(new AppError(err.toString(), 400));
         } else {
           res.status(200).json({
             status: "success",
@@ -85,7 +82,7 @@ module.exports = {
     );
   },
   // 创建文件
-  async createfile(req, res, next) {
+  async createfile(req: Request, res: Response, next: NextFunction) {
     let { path, file } = req.body;
     path = escapePath(path);
     file = escapePath(file);
@@ -114,7 +111,7 @@ module.exports = {
     });
   },
   // 创建文件夹
-  async createfolder(req, res, next) {
+  async createfolder(req: Request, res: Response, next: NextFunction) {
     let { path, folder, mask } = req.body;
     path = escapePath(path);
     folder = escapePath(folder);
@@ -135,40 +132,44 @@ module.exports = {
     });
   },
   // 删除数组内的所有文件
-  async delete(req, res, next) {
+  async delete(req: Request, res: Response, next: NextFunction) {
     let { items } = req.body;
     if (!checkVariables([items])) {
       return next(new AppError("variate undefined  or ''", 400));
     }
-    let pendingRequests = [];
-    let errorDeleted = [];
-    items.forEach(function (item) {
+    let pendingRequests: Promise<void>[] = [];
+    let errorDeleted: { item: string; err: Error }[] = [];
+    items.forEach(function (item: string) {
       item = escapePath(item);
       pendingRequests.push(
-        fsExtra.remove(`${coreFolder}${item}`, (err) => {
-          if (err) {
-            errorDeleted.push({ item, err });
-          }
+        new Promise<void>((resolve, reject) => {
+          fsExtra.remove(`${coreFolder}${item}`, (err) => {
+            if (err) {
+              errorDeleted.push({ item, err });
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
         })
       );
     });
-    Promise.all(pendingRequests)
-      .then(() => {
-        res.status(200).json({
-          status: "success",
-          message: "success delete select",
-        });
-      })
-      .catch(() => {
-        return next(new AppError(errorDeleted, 400));
+    try {
+      await Promise.all(pendingRequests);
+      res.status(200).json({
+        status: "success",
+        message: "success delete select",
       });
+    } catch (error) {
+      return next(new AppError(errorDeleted[0].err.toString(), 400));
+    }
   },
   // 清空文件夹
-  async emptydir(req, res, next) {
+  async emptydir(req: Request, res: Response, next: NextFunction) {
     let { path } = req.body;
     path = escapePath(path);
     fsExtra.emptyDir(`${coreFolder}${path}`, (err) => {
-      if (err) return next(new AppError(err, 400));
+      if (err) return next(new AppError(err.toString(), 400));
       res.status(200).json({
         status: "success",
         message: "success emptydir",
@@ -176,7 +177,7 @@ module.exports = {
     });
   },
   // 快速复制 新命名增加时间戳区别
-  async duplicate(req, res, next) {
+  async duplicate(req: Request, res: Response, next: NextFunction) {
     let { path } = req.body;
     path = escapePath(path);
     if (!checkVariables([path])) {
@@ -191,7 +192,7 @@ module.exports = {
 
     fsExtra.copy(`${coreFolder}${path}`, `${coreFolder}${nameNew}`, (err) => {
       if (err) {
-        return next(new AppError(err, 400));
+        return next(new AppError(err.toString(), 400));
       }
       res.status(200).json({
         status: "success",
@@ -200,69 +201,72 @@ module.exports = {
     });
   },
   // 复制到指定路径
-  async copy(req, res, next) {
+  async copy(req: Request, res: Response, next: NextFunction) {
     let { items, destination } = req.body;
     destination = escapePath(destination);
     if (!checkVariables([items, destination])) {
       return next(new AppError("variate undefined  or ''", 400));
     }
-    let pendingRequests = [];
-    let errorCopy = [];
-    items.forEach(function (item, i, arr) {
+
+    let pendingRequests: Promise<void>[] = [];
+    let errorCopy: { item: string; err: Error }[] = [];
+    items.forEach(function (item: string) {
       // 原文件路径
       let newItem = escapePath(item);
       let newdestination =
         `${coreFolder}${destination}/` + item.split("/").pop();
       pendingRequests.push(
-        fsExtra.copy(`${coreFolder}${newItem}`, newdestination, (err) => {
-          if (err) {
-            errorCopy.push({ newItem, err });
-          }
+        new Promise<void>((resolve, reject) => {
+          fsExtra.copy(`${coreFolder}${newItem}`,newdestination, (err) => {
+            if (err) {
+              errorCopy.push({ item:newItem, err });
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
         })
       );
     });
-    Promise.all(pendingRequests)
-      .then(() => {
-        res.status(200).json({
-          status: "success",
-          message: "copy success",
-        });
-      })
-      .catch(() => {
-        return next(new AppError(errorCopy, 400));
+    try {
+      await Promise.all(pendingRequests);
+      res.status(200).json({
+        status: "success",
+        message: "copy success",
       });
+    } catch (error) {
+      return next(new AppError(errorCopy[0].err.toString(), 400));
+    }
   },
   // 移动
-  async move(req, res, next) {
+  async move(req: Request, res: Response, next: NextFunction) {
     let { items, destination } = req.body;
     destination = escapePath(destination);
     if (!checkVariables([items, destination])) {
       return next(new AppError("variate undefined  or ''", 400));
     }
-    let pendingRequests = [];
+    let pendingRequests: Promise<void>[] = [];
     try {
-      items.forEach(function (item, i, arr) {
+      items.forEach(function (item: string) {
         let newItem = escapePath(item);
         let newdestination =
           `${coreFolder}${destination}/` + item.split("/").pop();
         pendingRequests.push(
-          fsExtra.moveSync(`${coreFolder}${newItem}`, newdestination, {
-            overwrite: true,
-          })
+          fsExtra.move(`${coreFolder}${newItem}`, newdestination, {overwrite: true,})
         );
       });
-      Promise.all(pendingRequests).then((values) => {
+      Promise.all(pendingRequests).then(() => {
         res.status(200).json({
           status: "success",
           message: "move success",
         });
       });
     } catch (error) {
-      return next(new AppError(error, 400));
+      return next(new AppError('unknown error', 400));
     }
   },
   // 解压缩
-  async unzip(req, res, next) {
+  async unzip(req: Request, res: Response, next: NextFunction) {
     let { file, destination } = req.body;
     if (!checkVariables([file, destination])) {
       return next(new AppError("variate undefined  or ''", 400));
@@ -279,14 +283,14 @@ module.exports = {
       // unzipper.Parse()是一个用于解压缩zip文件的方法，它接受一个可选的配置对象作为参数。
       // { forceStream: true }作为配置对象，以确保unzipper.Parse()方法返回一个流对象，而不是一个解压缩后的文件对象。
       const zip = fs.createReadStream(`${coreFolder}${file}`).pipe(unzipper.Parse({ forceStream: true }));
-      for (const entry of zip) {
+      for await (const entry of zip) {
         // 判断后缀决定是否写入文件
         if (checkExtension(nodePath.extname(entry.path))) {
           entry.pipe(
             fs.createWriteStream(`${coreFolder}${destination}/${entry.path}`)
           );
         } else {
-        // 自动排除这个文件
+          // 自动排除这个文件
           entry.autodrain();
         }
       }
@@ -295,11 +299,11 @@ module.exports = {
         message: "unzip success",
       });
     } catch (error) {
-      return next(new AppError(error, 400));
+      return next(new AppError('unknown error', 400));
     }
   },
   // 添加到压缩文件
-  async archive(req, res, next) {
+  async archive(req: Request, res: Response, next: NextFunction) {
     let { files, destination, name } = req.body;
     destination = escapePath(destination);
     name = escapePath(name);
@@ -315,10 +319,10 @@ module.exports = {
       archive.pipe(output);
       // 添加一个错误处理函数。当压缩过程中出现错误时，会触发archive对象的error事件，并执行错误处理函数。
       archive.on("error", function (err) {
-        return next(new AppError(err, 400));
+        return next(new AppError(err.message, 400));
       });
 
-      await files.forEach(function (item) {
+      await files.forEach(function (item: string) {
         let newItem = `${coreFolder}${escapePath(item)}`;
         // 文件或目录的名称
         let name = `${newItem.split("/").pop()}`;
@@ -340,11 +344,11 @@ module.exports = {
       });
       archive.finalize();
     } catch (error) {
-      return next(new AppError(error, 400));
+      return next(new AppError('unknown error', 400));
     }
   },
   // 保存图片，解析base64
-  async saveImage(req, res, next) {
+  async saveImage(req: Request, res: Response, next: NextFunction) {
     let { path, file, isnew } = req.body;
     path = escapePath(path);
     file = file.split(";base64,").pop();
@@ -376,16 +380,19 @@ module.exports = {
     );
   },
   // 上传文件,已经multer中间件处理了，这里只做看文件转移
-  async uploadFiles(req, res, next) {
+  async uploadFiles(req: Request, res: Response, next: NextFunction) {
     let { path } = req.body;
     path = escapePath(path);
     try {
+      if(req.files===undefined || !Array.isArray(req.files)){
+        return next(new AppError('fail decode error', 400));
+      }
       // 多个文件处理
-      req.files.forEach(function (element) {
+      req.files.forEach(function (element: Express.Multer.File) {
         // 解决中文文件名乱码问题
         let name = Buffer.from(element.originalname,"latin1").toString("utf8");
         if (checkExtension(nodePath.extname(name))) {
-          fs.readFile(element.path, function (err, data) {
+          fs.readFile(element.path, function (_err, data) {
             fs.writeFile(
               `${coreFolder}${path}/${name}`,
               data,
@@ -399,7 +406,7 @@ module.exports = {
         }
       });
     } catch (error) {
-      return next(new AppError(error.message, 400));
+      return next(new AppError('unknown error', 400));
     }
     res.status(200).json({
       status: "success",
@@ -407,3 +414,6 @@ module.exports = {
     });
   },
 };
+
+
+export default fileManagerController

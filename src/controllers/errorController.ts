@@ -4,17 +4,20 @@
  * @createDate 2023-01-18 19:27:34
  */
 
-const AppError = require("../utils/appError");
+
+
+
+import AppError  from '../utils/appError';
 // 读取环境变量是否有NODE_ENV
 const environment = process.env.NODE_ENV || "development";
 
-const handleCastErrorDB = (err) => {
+const handleCastErrorDB = (err:any) => {
   const message = `Invalid ${err.path}: ${err.value}.`;
   return new AppError(message, 400);
 };
 
-const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map((el) => el.message);
+const handleValidationErrorDB = (err:any) => {
+  const errors = Object.values(err.errors).map((el:any) => el.message);
   const message = `Invalid input data. ${errors.join(". ")}`;
   return new AppError(message, 400);
 };
@@ -26,7 +29,7 @@ const handleJWTExpiredError = () =>
   new AppError("Your token has expired! Please log in again.", 401);
 
 // 开发环境返回ERROR信息
-const sendErrorDev = (err, req, res) => {
+const sendErrorDev = (err:any, _req:any, res:any) => {
   console.error("ERROR 💥", err);
   res.status(err.statusCode).json({
     status: err.status,
@@ -36,7 +39,7 @@ const sendErrorDev = (err, req, res) => {
   });
 };
 // 生产环境返回ERROR信息
-const sendErrorProd = (err, req, res) => {
+const sendErrorProd = (err:any, _req:any, res:any) => {
   if (err.isOperational) {
     return res.status(err.statusCode).json({
       status: err.status,
@@ -50,7 +53,7 @@ const sendErrorProd = (err, req, res) => {
   });
 };
 
-module.exports = (err, req, res) => {
+ const globalErrorHandler = (err: any, req: any, res: any) => {
   if (environment === "development") {
     sendErrorDev(err, req, res);
   } else if (environment === "production") {
@@ -66,3 +69,6 @@ module.exports = (err, req, res) => {
     sendErrorProd(error, req, res);
   }
 };
+
+
+export default globalErrorHandler
