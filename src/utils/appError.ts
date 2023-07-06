@@ -4,7 +4,7 @@
  * @createDate 2023-01-18 13:45:56
  */
 
- class AppError extends Error {
+class AppError extends Error {
   statusCode: number
   messagetext: string
   status: string
