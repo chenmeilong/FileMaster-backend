@@ -1,86 +1,73 @@
 <div align="center">
-<h1>commodity-etoucher</h1>
-<a href="./README_en.md">English</a>|<a href="./README.md">简体中文</a>
+<img src="./img/logo.png" style="zoom:100%;" />
 </div>
-<strong>commodity-etoucher是一个AI抠图器，实现自动抠图，前景背景融合，还支持自定义风格生成。</strong>
-
+<div align="center">
+<a href="./README_en.md" style="text-decoration: none;"><img src="https://img.shields.io/badge/English-orange"/>
+<a href="./README.md" style="text-decoration: none;"><img src="https://img.shields.io/badge/简体中文-blue"/>
+<a href="https://github.com/chenmeilong/FileMaster-frontend" style="text-decoration: none;"><img src="https://img.shields.io/badge/前端地址-yellow"/>
+<a href="https://github.com/chenmeilong/FileMaster-backend" style="text-decoration: none;"><img src="https://img.shields.io/badge/后端地址-green"/>
+<a href="http://fm.mileschen.cn/" style="text-decoration: none;"><img src="https://img.shields.io/badge/体验地址-brightgreen"/></a>
+</div>
+<div align="center">
+<img src="https://img.shields.io/badge/-Node-red"/>
+<img src="https://img.shields.io/badge/-TS-lightgrey"/>
+<img src="https://img.shields.io/badge/-Eslint-blue"/>
+<img src="https://img.shields.io/badge/-Prettier-blueviolet"/>
+</div>
+<div align="center">
+<img src="https://img.shields.io/badge/express-4.18.2-yellowgreen"/>
+<img src="https://img.shields.io/badge/helmet-7.0.0-orange"/>
+<img src="https://img.shields.io/badge/multer-1.4.5-blueviolet"/>
+<img src="https://img.shields.io/badge/unzipper-0.10.14-blue"/>
+<img src="https://img.shields.io/badge/graceful--fs-4.2.11-lightgrey"/>
+<img src="https://img.shields.io/badge/fs--extra-11.1.1-red"/>
+<img src="https://img.shields.io/badge/archiver-5.3.1-yellow"/>
+</div>
 <hr>
 
-> 本项目源于19年阿里巴巴1688图像算法大赛。演示视频地址请到[我的博客](http://img.cmlt.fun/article/fcn演示.mp4)查看
 
-## 功能
-- 生成商品白底图
-- 添加商品前景图
-- 添加商品背景图
-- 生成风格图
-- 本地客户端
-- 网页客户端
-  ![](readme.assets/20230617144416.png)
-
-## 更新
-
-- 使用Skip FCN，将VGG19最后5层feature map作为FCN输入，提高模型精度；
-- YOLO3对商品图像定位，提升商品图占比;
-- 使用风格迁移，给图片赋予艺术特色，优化图片边缘；
-- 自研算法寻找图像的边缘和方向，加入alpha通道梯段透明化优化图像边缘，[详细了解](#图像边缘梯度透明化算法)；
-- 使用腐蚀膨胀优化图片；
-- 使用中值滤波过滤图片噪音；
-- 增加背景图替换功能；
-- 增加前景图替换功能
-- 增加本地客户端UI；
-- 将功能部分移植到WEB服务器供线上使用。
-
-## 注意事项
-1. 需要自己下载对应的特征提取模型权重值
+## API
+- fm/foldertree：获取根目录开始的文件夹树，不包含文件
+- fm/folder：获取指定目录下所有文件，包含文件夹和文件，不包含子目录下的文件
+- fm/all：获取指定目录下所有文件，包含文件夹和文件，包含子目录下的文件
+- fm/rename：文件或文件夹重命名
+- fm/createfile：创建文件
+- fm/createfolder：创建文件夹
+- fm/delete：删除指定文件
+- fm/copy：复制指定文件到指定目录
+- fm/move：移动指定文件到指定目录
+- fm/emptydir：清空指定目录下使有文件和文件夹
+- fm/unzip：解压缩
+- fm/archive：压缩文件和文件夹
+- fm/duplicate：快速复制
+- fm/saveimage：保存图片
+- fm/upload：上传文件
+- uploads：静态资源托管
 
 ## 快速上手
 
-1. 环境安装
-> 注意pytorch要单独先安装torch >= 1.7.0
-> `pip install -r requirements.txt`
+1. 安装依赖环境
+> `pnpm i`   or `yarn`  or  `npm i` 
 
-2. 文件下载
-- FCN数据集[下载](http://img.cmlt.fun/article/fcnbagdata.zip)，解压到根目录data文件夹下
-- YOLO数据集[下载](http://img.cmlt.fun/article/yolobagdata.zip)，解压到yolov3_master/data目录下
+2. 启动项目
+> `pnpm start`  or `yarn start`  or  `npm start` 
 
-3. 训练
-在yolov3_master目录下执行，训练YOLO定位模型
-`python train.py`
-在根目录下执行，训练FCN语义分割模型
-`python train.py`
+## 请求流程图
 
-4. 使用模型
-启动本地客户端ui
-`python main.py`
-WEB/img目录下执行启动Django后端服务
-`python manage.py runserver`
-## 技术框架
-### YOLO模型完成对商品图像定位
-![](readme.assets/20230617151406.png)
-![](readme.assets/20230617151429.png)
+<div align="center">
+<img src="./img/express.jpg" />
+</div>
 
-### FCN模型完成对商品图像分割
-![](readme.assets/20230617151742.png)
-![](readme.assets/20230617151812.png)
-
-### Gram矩阵实现风格迁移
-![](readme.assets/20230617151855.png)
-
-## 图像边缘梯度透明化算法
-使用2*2的filter遍历mask寻找图像边缘，一共有16种情况，这里只认为以下8中情况为有效边缘，即上、下、左、右、左上、右上、左下、右下。以下图左上角情况为例：此时2*2的filter遍历的情况，黄色小球代表当前遍历像素的位置，固定为向右、向下延伸1pix像素，组成的2*2的区域；上白下黑说明这是上边缘。
-![](readme.assets/20230617152620.png)
-在mask图检测到对应边缘后，将原图core（图中小球）对应的区域（3*3）透明度修改为逐渐透明，其他方向亦是如此。
-![](readme.assets/20230617153343.png)
-core透明区域分别为3*3、5*5、7*7的边缘图像，透明区域能增强与新背景的融合度。
-![](readme.assets/20230617153408.png)
 
 ## 待办
-- [ ] 由于商品图像被遮挡和算法的缺陷。使用GAN对抗神经网络进行修复；
-- [ ] 建立数据库对图片存储管理，采用众包思想，将用户抠取的图像用于再训练；
-- [ ] 改进算法，提高精度
-- [ ] YOLO3、 FCN增加其他商品定位训练，提高算法的通用性；
-- [ ] 将所有模型做成端到端；
-- [ ] WEB功能完善
+- [X] 优化目录树查找结构，提升目录树查询效率
+- [X] 根据开发环境和生产环境的区分，全局错误中间件
+- [X] 文件批处理，将所有的异步对象放在数组中，使用promise.all处理。
+- [ ] 更加详细的类型定义
+- [ ] 文本文件编辑后保存API
+- [ ] 文件搜索API
+- [ ] 上线npm完善安装使用文档
+
 
 ## 贡献
 欢迎PRs！如果你想为这个项目做贡献，你可以提交pr或issue，[待办](#待办)中有一些可以扩展的功能。我很高兴看到更多的人参与改进并优化它。
